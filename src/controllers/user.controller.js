@@ -5,6 +5,24 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { v2 as cloudinary } from "cloudinary";
 import { uploadCloudinary } from "../utils/cloudinary.js";
 
+const generateAccessAndRefreshToken = async (userId) => {
+  try {
+    const user = await User.findById(userId);
+    const accessToken = user.generateAccessToken();
+    const refreshToken = user.generateRefreshToken();
+
+    user.refreshToken = refreshToken;
+    await user.save({ validateBeforeSave: false });
+
+    return { accessToken, refreshToken };
+  } catch (error) {
+    throw new ApiError(
+      500,
+      "Something went wrong while generating access and refresh token"
+    );
+  }
+};
+
 const registerUser = asyncHandler(async (req, res) => {
   // get all users details from frontend /  request body
   // validation / user must not be empty
@@ -77,4 +95,68 @@ const registerUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, createdUser, "User registered successfully"));
 });
 
-export { registerUser };
+// login user controller
+const loginUser = asyncHandler(async (req, res) => {
+  // req.body data
+  // check if user exists
+  // check if password is correct
+  // create access token
+  // create refresh token
+  // send response/ cookies
+
+  const { email, username, password } = req.body;
+
+  if (!username || email) {
+    throw new ApiError(400, "Email or username is required");
+  }
+
+  const user = await User.findOne({
+    $or: [{ username }, { email }],
+  });
+
+  if (!user) {
+    throw new ApiError(400, "user does not exists!");
+  }
+
+  const isValidPassword = await User.isPasswordCorrect(password);
+
+  if (!isValidPassword) {
+    throw new ApiError(401, "Password is incorrect!");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshToken(
+    user._id
+  );
+
+  const loggenedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );  
+
+  if (!loggenedInUser) {
+    throw new ApiError(500, "Something went wrong while logging in user");
+  }
+
+ const options = {
+  expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+  httpOnly: true,
+  secure: true,
+  sameSite: "none",
+};
+
+return res
+  .status(200)
+  .cookie("accessToken", accessToken, options)
+  .cookie("refreshToken", refreshToken, options)
+  .json(
+    new ApiResponse(
+      {
+        user: loggenedInUser,
+        accessToken,
+        refreshToken,
+      },
+      "User logged in successfully"
+    )
+  );
+});
+
+export { registerUser, loginUser };
