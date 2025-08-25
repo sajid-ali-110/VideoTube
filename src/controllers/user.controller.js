@@ -106,7 +106,7 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const { email, username, password } = req.body;
 
-  if (!username || email) {
+  if (!(username || email)) {
     throw new ApiError(400, "Email or username is required");
   }
 
@@ -118,7 +118,7 @@ const loginUser = asyncHandler(async (req, res) => {
     throw new ApiError(400, "user does not exists!");
   }
 
-  const isValidPassword = await User.isPasswordCorrect(password);
+  const isValidPassword = await user.isPasswordCorrect(password);
 
   if (!isValidPassword) {
     throw new ApiError(401, "Password is incorrect!");
@@ -130,33 +130,63 @@ const loginUser = asyncHandler(async (req, res) => {
 
   const loggenedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
-  );  
+  );
 
   if (!loggenedInUser) {
     throw new ApiError(500, "Something went wrong while logging in user");
   }
 
- const options = {
-  expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-  httpOnly: true,
-  secure: true,
-  sameSite: "none",
-};
+  const options = {
+    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  };
 
-return res
-  .status(200)
-  .cookie("accessToken", accessToken, options)
-  .cookie("refreshToken", refreshToken, options)
-  .json(
-    new ApiResponse(
-      {
-        user: loggenedInUser,
-        accessToken,
-        refreshToken,
-      },
-      "User logged in successfully"
-    )
-  );
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new ApiResponse(200,
+        {
+          user: loggenedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged in successfully"
+      ),
+    );
 });
 
-export { registerUser, loginUser };
+// logout user controller
+const logoutUser = asyncHandler(async (req, res) => {
+  // clear cookies
+  // send response
+
+  User.findByIdAndUpdate(
+    req.user._id,
+    {
+      $set: {
+        refreshToken: undefined,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  const options = {
+    expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new ApiResponse(200, {}, "User logged out successfully"));
+});
+
+export { registerUser, loginUser, logoutUser };
