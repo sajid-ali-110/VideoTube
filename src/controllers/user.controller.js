@@ -164,7 +164,7 @@ const logoutUser = asyncHandler(async (req, res) => {
   // clear cookies
   // send response
 
-  User.findByIdAndUpdate(
+  await User.findByIdAndUpdate(
     req.user._id,
     {
       $set: {
