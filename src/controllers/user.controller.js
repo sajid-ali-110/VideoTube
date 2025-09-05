@@ -321,25 +321,25 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 });
 
 // update User cover avatar controller
-const updateUserCoverAvatar = asyncHandler(async (req, res) => {
+// const updateUserCoverAvatar = asyncHandler(async (req, res) => {
 
-  const coverImageLocalPath = req.file?.path;
-  if (!coverImageLocalPath) {
-    throw new ApiError(400, "cover image file is missing!");
-  }
-  const coverImage = await uploadCloudinary(coverImageLocalPath);
-  if (!coverImage.url) {
-    throw new ApiError(400, "Error while uploading on cover image");
-  } 
-  const user = await User.findByIdAndUpdate(
-    req.user?._id,
-    { $set: { coverImage: coverImage.url } },
-    { new: true }
-  ).select("-password");
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "Cover image updated successfully"));
-});
+//   const coverImageLocalPath = req.file?.path;
+//   if (!coverImageLocalPath) {
+//     throw new ApiError(400, "cover image file is missing!");
+//   }
+//   const coverImage = await uploadCloudinary(coverImageLocalPath);
+//   if (!coverImage.url) {
+//     throw new ApiError(400, "Error while uploading on cover image");
+//   } 
+//   const user = await User.findByIdAndUpdate(
+//     req.user?._id,
+//     { $set: { coverImage: coverImage.url } },
+//     { new: true }
+//   ).select("-password");
+//   return res
+//     .status(200)
+//     .json(new ApiResponse(200, user, "Cover image updated successfully"));
+// });
 
 
 
