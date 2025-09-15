@@ -419,7 +419,7 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
       },
     },
     {
-      $lookup: {
+      $lookup: { 
         from: "videos",
         localField: "watchHistory",
         foreignField: "_id",
@@ -442,6 +442,13 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
               ],
             },
           },
+          {
+            $addFields: {
+              owner: {
+                $first: "$owner",
+              },
+            },
+          }
         ],
       },
     },
@@ -452,7 +459,7 @@ const getUserWatchHistory = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-        user.watchHistory,
+        user[0].watchHistory,
         "Watch history fetched successfully"
       )
     );
