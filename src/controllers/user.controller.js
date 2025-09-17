@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -370,20 +371,16 @@ const getUserChannelProfile = asyncHandler(async (req, res) => {
     },
     {
       $addFields: {
-        subscribersCount: {
-          $size: "$subscribers",
-        },
-        subscribedChannelsCount: {
-          $size: "$subscribedChannels",
-        },
+        subscribersCount: { $size: "$subscribers" },
+        subscribedChannelsCount: { $size: "$subscribedChannels" },
         isSubscribed: {
-          $if: {
-            $in: [req.user?._id, "$subscribers.subscriber"],
+          $cond: {
+            if: { $in: [req.user?._id, "$subscribers.subscriber"] },
             then: true,
-            else: false,
-          },
-        },
-      },
+            else: false
+          }
+        }
+      }
     },
     {
       $project: {
